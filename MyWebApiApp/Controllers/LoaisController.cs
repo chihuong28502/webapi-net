@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MyWebApiApp.Data;
 using MyWebApiApp.Models;
@@ -12,24 +13,33 @@ namespace MyWebApiApp.Controllers
     {
         private readonly MyDbContext _context;
 
-        public LoaisController(MyDbContext context) {
+        public LoaisController(MyDbContext context)
+        {
             _context = context;
 
         }
         [HttpGet]
-        public IActionResult GetAll() {
-        var loai = _context.Loais.ToList();
-            return Ok(loai);
+        public IActionResult GetAll()
+        {
+            try
+            {
+                var loai = _context.Loais.ToList();
+                return Ok(loai);
+            }
+            catch
+            {
+                return BadRequest();
+            }
 
         }
 
         [HttpGet("{id}")]
         public IActionResult GetById(int id)
         {
-            var loai = _context.Loais.SingleOrDefault(loai =>loai.MaLoai == id);
-            if(loai != null)
+            var loai = _context.Loais.SingleOrDefault(loai => loai.MaLoai == id);
+            if (loai != null)
             {
-            return Ok(loai);
+                return Ok(loai);
             }
             else
             {
@@ -37,27 +47,31 @@ namespace MyWebApiApp.Controllers
             }
         }
         [HttpPost]
+        [Authorize]
         public IActionResult CreateNew(LoaiModel model)
         {
-            try {
+            try
+            {
                 var loai = new Loai
                 {
                     TenLoai = model.TenLoai
                 };
                 _context.Add(loai);
                 _context.SaveChanges();
-                return Ok(loai);
+                return StatusCode(StatusCodes.Status201Created);
             }
-            catch {
+            catch
+            {
                 return BadRequest();
-                    }
+            }
         }
 
         [HttpPut("{id}")]
-        public IActionResult UpdateLoaiById(int id , LoaiModel model)
+        public IActionResult UpdateLoaiById(int id, LoaiModel model)
         {
             var loai = _context.Loais.SingleOrDefault(loai => loai.MaLoai == id);
-            if(loai != null ) {
+            if (loai != null)
+            {
                 loai.TenLoai = model.TenLoai;
                 _context.SaveChanges();
                 return NoContent();
@@ -66,7 +80,23 @@ namespace MyWebApiApp.Controllers
             {
                 return NotFound();
             }
-            
+
+        }
+        [HttpDelete("{id}")]
+        public IActionResult DeleteLoaiById(int id)
+        {
+            var loai = _context.Loais.SingleOrDefault(loai => loai.MaLoai == id);
+            if (loai == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                _context.Remove(loai);
+                _context.SaveChanges();
+                return StatusCode(StatusCodes.Status200OK);
+
+            }
         }
     }
 }
